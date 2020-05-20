@@ -37,7 +37,7 @@ def welcome():
 
 #Setup the station page
 @app.route("/api/v1.0/station")
-def stations():
+def station():
     # Create our session (link) from Python to the DB
     session = Session(engine)
 
@@ -89,6 +89,8 @@ def precipitation():
     qry = session.query(Measurement.date, Measurement.prcp).\
                         filter(Measurement.date >= year_ago).all()
 
+    session.close()
+
     #prcp_list = []
     prcpDict = {}
     for result in qry:
@@ -99,6 +101,21 @@ def precipitation():
 #Setup the stations page
 @app.route("/api/v1.0/stations")
 def stations():
+    # Create our session (link) from Python to the DB
+    session = Session(engine)
+
+    # Query all stations
+    results = session.query(Station.station).all()
+
+    session.close()
+
+    # Convert list of tuples into normal list
+    qry_result = list(np.ravel(results))
+
+    return jsonify(qry_result)
+
+#Setup the tobs page
+#@app.route("/api/v1.0/tobs")
 
 
 if __name__ == "__main__":
