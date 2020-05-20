@@ -33,6 +33,8 @@ def welcome():
         f"/api/v1.0/station<br/>"
         f"/api/v1.0/measurement<br/>"
         f"/api/v1.0/precipitation<br/>"
+        f"/api/v1.0/station<br/>"
+        f"/api/v1.0/tobs<br/>"
     )
 
 #Setup the station page
@@ -115,7 +117,53 @@ def stations():
     return jsonify(qry_result)
 
 #Setup the tobs page
-#@app.route("/api/v1.0/tobs")
+@app.route("/api/v1.0/tobs")
+def tobs():
+
+    # Create our session (link) from Python to the DB
+    session = Session(engine)
+
+    #Make a query to find the activity of each station reporting
+    qry_station_active = session.query(Measurement.station, func.count(Measurement.station)).\
+                            group_by(Measurement.station).\
+                            order_by(func.count(Measurement.station).desc()).all()
+
+    session.close()
+
+    #The first entry is the most active since this is descending order
+    most_active = qry_station_active[0][0]
+
+    # Create our session (link) from Python to the DB
+    session = Session(engine)
+
+    #First we can use strftime and some functions to find the most recent date
+    top_date = session.query(func.max(func.strftime("%Y-%m-%d", Measurement.date)))
+
+    #From this we can pull out out a a string of the date
+    top_date_date = dt.datetime.strptime(top_date[0][0], "%Y-%m-%d")
+
+    #Now I need a variable that is the date 1 year ago. I used weeks=52.2 since 52*7 /= 365
+    year_ago = top_date_date - dt.timedelta(weeks=52.2)
+
+    session.close()
+
+    # Create our session (link) from Python to the DB
+    session = Session(engine)
+
+    # Query all stations
+    results = session.query(Measurement.date, Measurement.tobs).\
+                     filter(Measurement.date >= year_ago).\
+                     filter(Measurement.station == most_active).all()
+
+    session.close()
+
+    # Convert list of tuples into normal list
+    qry_result = list(np.ravel(results))
+
+    return jsonify(qry_result)
+
+#qry = session.query(Measurement.date, Measurement.prcp).\
+                    #filter(Measurement.date >= year_ago).all()
 
 
 if __name__ == "__main__":
