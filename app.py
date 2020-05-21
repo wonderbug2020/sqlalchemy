@@ -33,7 +33,7 @@ def welcome():
         f"/api/v1.0/station<br/>"
         f"/api/v1.0/measurement<br/>"
         f"/api/v1.0/precipitation<br/>"
-        f"/api/v1.0/station<br/>"
+        f"/api/v1.0/stations<br/>"
         f"/api/v1.0/tobs<br/>"
     )
 
