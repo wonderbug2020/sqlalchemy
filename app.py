@@ -21,22 +21,22 @@ Base.prepare(engine, reflect=True)
 Station = Base.classes.station
 Measurement = Base.classes.measurement
 
-# 2. Create an app, being sure to pass __name__
+#Create an app,
 app = Flask(__name__)
 
 #Setup the welcome or home page
 @app.route("/")
 def welcome():
-    """List all available api routes."""
+    #Need to return all the possible routes
     return (
         f"Available Routes:<br/>"
-        f"/api/v1.0/station<br/>"
-        f"/api/v1.0/measurement<br/>"
+        #f"/api/v1.0/station<br/>"
+        #f"/api/v1.0/measurement<br/>"
         f"/api/v1.0/precipitation<br/>"
         f"/api/v1.0/stations<br/>"
         f"/api/v1.0/tobs<br/>"
     )
-
+"""
 #Setup the station page
 @app.route("/api/v1.0/station")
 def station():
@@ -68,6 +68,7 @@ def measurement():
     qry_result = list(np.ravel(results))
 
     return jsonify(qry_result)
+"""
 
 #Setup the precipitation page
 @app.route("/api/v1.0/precipitation")
@@ -75,10 +76,10 @@ def precipitation():
     # Create our session (link) from Python to the DB
     session = Session(engine)
 
-    #First we can use strftime and some functions to find the most recent date
+    #First we can use strftime and some functions to find the most recent date in the database
     top_date = session.query(func.max(func.strftime("%Y-%m-%d", Measurement.date)))
 
-    #From this we can pull out out a a string of the date
+    #From this we can pull out out a string of the date
     top_date_date = dt.datetime.strptime(top_date[0][0], "%Y-%m-%d")
 
     #Now I need a variable that is the date 1 year ago. I used weeks=52.2 since 52*7 /= 365
@@ -162,8 +163,7 @@ def tobs():
 
     return jsonify(qry_result)
 
-#qry = session.query(Measurement.date, Measurement.prcp).\
-                    #filter(Measurement.date >= year_ago).all()
+
 
 
 if __name__ == "__main__":
