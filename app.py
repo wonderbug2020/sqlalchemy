@@ -138,19 +138,11 @@ def tobs():
     #The first entry is the most active since this is descending order
     most_active = qry_station_active[0][0]
 
-    # Create our session (link) from Python to the DB
-    session = Session(engine)
-
-    #First we can use strftime and some functions to find the most recent date
-    top_date = session.query(func.max(func.strftime("%Y-%m-%d", Measurement.date)))
-
-    #From this we can pull out out a a string of the date
-    top_date_date = dt.datetime.strptime(top_date[0][0], "%Y-%m-%d")
+    #First to set the string of the return from some functions to variables
+    last_date_str = last_date()
 
     #Now I need a variable that is the date 1 year ago. I used weeks=52.2 since 52*7 /= 365
-    year_ago = top_date_date - dt.timedelta(weeks=52.2)
-
-    session.close()
+    year_ago = last_date_str - dt.timedelta(weeks=52.2)
 
     # Create our session (link) from Python to the DB
     session = Session(engine)
@@ -195,6 +187,14 @@ def start_end_date(start,end):
     #First to set up an if statement to make sure the end date comes after the start date
     if start >= end:
         return("please set your end date to be after the beginning date")
+
+    #Second, to set the string of the return from some functions to variables
+    first_date_str = str(first_date())
+    last_date_str = str(last_date())
+
+    #Next is an if statement to check to see if the date passed is between the appropriate dates
+    if (start < first_date_str) | (end > last_date_str):
+        return("please choose a set of dates between 2010-01-02 and 2017-08-23")
 
     # Create our session (link) from Python to the DB
     session = Session(engine)
