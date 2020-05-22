@@ -169,6 +169,14 @@ def tobs():
 
 @app.route("/api/v1.0/<start>")
 def start_date(start):
+    #First to set the string of the return from some functions to variables
+    first_date_str = str(first_date())
+    last_date_str = str(last_date())
+
+    #Next is an if statement to check to see if the date passed is between the appropriate dates
+    if (start < first_date_str) | (start > last_date_str):
+        return("please choose a date between 2010-01-02 and 2017-08-23")
+
     # Create our session (link) from Python to the DB
     session = Session(engine)
 
@@ -184,6 +192,10 @@ def start_date(start):
 
 @app.route("/api/v1.0/<start>/<end>")
 def start_end_date(start,end):
+    #First to set up an if statement to make sure the end date comes after the start date
+    if start >= end:
+        return("please set your end date to be after the beginning date")
+
     # Create our session (link) from Python to the DB
     session = Session(engine)
 
@@ -197,6 +209,35 @@ def start_end_date(start,end):
     qry_result = list(np.ravel(temperature_readings))
 
     return jsonify(qry_result)
+
+#Now What I want to do is have some functions that will be used several times
+#First up is a function that will find the first date of the database
+def first_date():
+    # Create our session (link) from Python to the DB
+    session = Session(engine)
+
+    #First we can use strftime and some functions to find the most recent date in the database
+    first_date = session.query(func.min(func.strftime("%Y-%m-%d", Measurement.date)))
+
+    #From this we can pull out out a string of the date
+    first_date_str = dt.datetime.strptime(first_date[0][0], "%Y-%m-%d")
+
+    #Now to return the date string
+    return(first_date_str)
+
+#Second is going to be a function that will find the last date of the database
+def last_date():
+    # Create our session (link) from Python to the DB
+    session = Session(engine)
+
+    #First we can use strftime and some functions to find the most recent date in the database
+    last_date = session.query(func.max(func.strftime("%Y-%m-%d", Measurement.date)))
+
+    #From this we can pull out out a string of the date
+    last_date_str = dt.datetime.strptime(last_date[0][0], "%Y-%m-%d")
+
+    #Now to return the date string
+    return(last_date_str)
 
 if __name__ == "__main__":
     app.run(debug=True)
