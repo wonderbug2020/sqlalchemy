@@ -35,6 +35,10 @@ def welcome():
         f"/api/v1.0/precipitation<br/>"
         f"/api/v1.0/stations<br/>"
         f"/api/v1.0/tobs<br/>"
+        f"/api/v1.0/*<start><br/>"
+        f"/api/v1.0/*/#<start><br/>"
+        f"* is a starting date<br/>"
+        f"# is an end date"
     )
 """
 #Setup the station page
@@ -163,8 +167,36 @@ def tobs():
 
     return jsonify(qry_result)
 
+@app.route("/api/v1.0/<start>")
+def start_date(start):
+    # Create our session (link) from Python to the DB
+    session = Session(engine)
 
+    #Query to get the desired data
+    temperature_readings = session.query(func.min(Measurement.tobs), func.max(Measurement.tobs), func.round(func.avg(Measurement.tobs),1)).\
+                                     filter(Measurement.date >= start).all()
 
+    session.close()
+
+    qry_result = list(np.ravel(temperature_readings))
+
+    return jsonify(qry_result)
+
+@app.route("/api/v1.0/<start>/<end>")
+def start_end_date(start,end):
+    # Create our session (link) from Python to the DB
+    session = Session(engine)
+
+    #Query to get the desired data
+    temperature_readings = session.query(func.min(Measurement.tobs), func.max(Measurement.tobs), func.round(func.avg(Measurement.tobs),1)).\
+                                     filter(Measurement.date >= start).\
+                                     filter(Measurement.date <= end).all()
+
+    session.close()
+
+    qry_result = list(np.ravel(temperature_readings))
+
+    return jsonify(qry_result)
 
 if __name__ == "__main__":
     app.run(debug=True)
