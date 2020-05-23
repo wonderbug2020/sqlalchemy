@@ -77,19 +77,15 @@ def measurement():
 #Setup the precipitation page
 @app.route("/api/v1.0/precipitation")
 def precipitation():
-    # Create our session (link) from Python to the DB
-    session = Session(engine)
 
-    #First we can use strftime and some functions to find the most recent date in the database
-    top_date = session.query(func.max(func.strftime("%Y-%m-%d", Measurement.date)))
-
-    #From this we can pull out out a string of the date
-    top_date_date = dt.datetime.strptime(top_date[0][0], "%Y-%m-%d")
+    #Next to set the string of the return from some functions to variables
+    last_date_str = last_date()
 
     #Now I need a variable that is the date 1 year ago. I used weeks=52.2 since 52*7 /= 365
-    year_ago = top_date_date - dt.timedelta(weeks=52.2)
+    year_ago = last_date_str - dt.timedelta(weeks=52.2)
 
-
+    # Create our session (link) from Python to the DB
+    session = Session(engine)
 
     # Query all stations
     #results = session.query(Station.station).all()
@@ -138,7 +134,7 @@ def tobs():
     #The first entry is the most active since this is descending order
     most_active = qry_station_active[0][0]
 
-    #First to set the string of the return from some functions to variables
+    #Next to set the string of the return from some functions to variables
     last_date_str = last_date()
 
     #Now I need a variable that is the date 1 year ago. I used weeks=52.2 since 52*7 /= 365
