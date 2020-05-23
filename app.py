@@ -35,6 +35,10 @@ def welcome():
         f"/api/v1.0/precipitation<br/>"
         f"/api/v1.0/stations<br/>"
         f"/api/v1.0/tobs<br/>"
+        f"/api/v1.0/*<start><br/>"
+        f"/api/v1.0/*/#<start><br/>"
+        f"* is a starting date<br/>"
+        f"# is an end date"
     )
 """
 #Setup the station page
@@ -73,19 +77,15 @@ def measurement():
 #Setup the precipitation page
 @app.route("/api/v1.0/precipitation")
 def precipitation():
-    # Create our session (link) from Python to the DB
-    session = Session(engine)
 
-    #First we can use strftime and some functions to find the most recent date in the database
-    top_date = session.query(func.max(func.strftime("%Y-%m-%d", Measurement.date)))
-
-    #From this we can pull out out a string of the date
-    top_date_date = dt.datetime.strptime(top_date[0][0], "%Y-%m-%d")
+    #Next to set the string of the return from some functions to variables
+    last_date_str = last_date()
 
     #Now I need a variable that is the date 1 year ago. I used weeks=52.2 since 52*7 /= 365
-    year_ago = top_date_date - dt.timedelta(weeks=52.2)
+    year_ago = last_date_str - dt.timedelta(weeks=52.2)
 
-
+    # Create our session (link) from Python to the DB
+    session = Session(engine)
 
     # Query all stations
     #results = session.query(Station.station).all()
@@ -134,19 +134,11 @@ def tobs():
     #The first entry is the most active since this is descending order
     most_active = qry_station_active[0][0]
 
-    # Create our session (link) from Python to the DB
-    session = Session(engine)
-
-    #First we can use strftime and some functions to find the most recent date
-    top_date = session.query(func.max(func.strftime("%Y-%m-%d", Measurement.date)))
-
-    #From this we can pull out out a a string of the date
-    top_date_date = dt.datetime.strptime(top_date[0][0], "%Y-%m-%d")
+    #Next to set the string of the return from some functions to variables
+    last_date_str = last_date()
 
     #Now I need a variable that is the date 1 year ago. I used weeks=52.2 since 52*7 /= 365
-    year_ago = top_date_date - dt.timedelta(weeks=52.2)
-
-    session.close()
+    year_ago = last_date_str - dt.timedelta(weeks=52.2)
 
     # Create our session (link) from Python to the DB
     session = Session(engine)
@@ -163,8 +155,85 @@ def tobs():
 
     return jsonify(qry_result)
 
+@app.route("/api/v1.0/<start>")
+def start_date(start):
+    #First to set the string of the return from some functions to variables
+    first_date_str = str(first_date())
+    last_date_str = str(last_date())
 
+    #Next is an if statement to check to see if the date passed is between the appropriate dates
+    if (start < first_date_str) | (start > last_date_str):
+        return("please choose a date between 2010-01-02 and 2017-08-23")
 
+    # Create our session (link) from Python to the DB
+    session = Session(engine)
+
+    #Query to get the desired data
+    temperature_readings = session.query(func.min(Measurement.tobs), func.max(Measurement.tobs), func.round(func.avg(Measurement.tobs),1)).\
+                                     filter(Measurement.date >= start).all()
+
+    session.close()
+
+    qry_result = list(np.ravel(temperature_readings))
+
+    return jsonify(qry_result)
+
+@app.route("/api/v1.0/<start>/<end>")
+def start_end_date(start,end):
+    #First to set up an if statement to make sure the end date comes after the start date
+    if start >= end:
+        return("please set your end date to be after the beginning date")
+
+    #Second, to set the string of the return from some functions to variables
+    first_date_str = str(first_date())
+    last_date_str = str(last_date())
+
+    #Next is an if statement to check to see if the date passed is between the appropriate dates
+    if (start < first_date_str) | (end > last_date_str):
+        return("please choose a set of dates between 2010-01-02 and 2017-08-23")
+
+    # Create our session (link) from Python to the DB
+    session = Session(engine)
+
+    #Query to get the desired data
+    temperature_readings = session.query(func.min(Measurement.tobs), func.max(Measurement.tobs), func.round(func.avg(Measurement.tobs),1)).\
+                                     filter(Measurement.date >= start).\
+                                     filter(Measurement.date <= end).all()
+
+    session.close()
+
+    qry_result = list(np.ravel(temperature_readings))
+
+    return jsonify(qry_result)
+
+#Now What I want to do is have some functions that will be used several times
+#First up is a function that will find the first date of the database
+def first_date():
+    # Create our session (link) from Python to the DB
+    session = Session(engine)
+
+    #First we can use strftime and some functions to find the most recent date in the database
+    first_date = session.query(func.min(func.strftime("%Y-%m-%d", Measurement.date)))
+
+    #From this we can pull out out a string of the date
+    first_date_str = dt.datetime.strptime(first_date[0][0], "%Y-%m-%d")
+
+    #Now to return the date string
+    return(first_date_str)
+
+#Second is going to be a function that will find the last date of the database
+def last_date():
+    # Create our session (link) from Python to the DB
+    session = Session(engine)
+
+    #First we can use strftime and some functions to find the most recent date in the database
+    last_date = session.query(func.max(func.strftime("%Y-%m-%d", Measurement.date)))
+
+    #From this we can pull out out a string of the date
+    last_date_str = dt.datetime.strptime(last_date[0][0], "%Y-%m-%d")
+
+    #Now to return the date string
+    return(last_date_str)
 
 if __name__ == "__main__":
     app.run(debug=True)
