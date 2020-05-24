@@ -30,55 +30,21 @@ def welcome():
     #Need to return all the possible routes
     return (
         f"Available Routes:<br/>"
-        #f"/api/v1.0/station<br/>"
-        #f"/api/v1.0/measurement<br/>"
         f"/api/v1.0/precipitation<br/>"
         f"/api/v1.0/stations<br/>"
         f"/api/v1.0/tobs<br/>"
         f"/api/v1.0/*<start><br/>"
         f"/api/v1.0/*/#<start><br/>"
         f"* is a starting date<br/>"
-        f"# is an end date"
+        f"# is an end date<br/>"
+        f"date format is YYYY-MM-DD"
     )
-"""
-#Setup the station page
-@app.route("/api/v1.0/station")
-def station():
-    # Create our session (link) from Python to the DB
-    session = Session(engine)
-
-    # Query all stations
-    results = session.query(Station.station).all()
-
-    session.close()
-
-    # Convert list of tuples into normal list
-    qry_result = list(np.ravel(results))
-
-    return jsonify(qry_result)
-
-#Setup the measurement page
-@app.route("/api/v1.0/measurement")
-def measurement():
-    # Create our session (link) from Python to the DB
-    session = Session(engine)
-
-    # Query all stations
-    results = session.query(Measurement.prcp).all()
-
-    session.close()
-
-    # Convert list of tuples into normal list
-    qry_result = list(np.ravel(results))
-
-    return jsonify(qry_result)
-"""
 
 #Setup the precipitation page
 @app.route("/api/v1.0/precipitation")
 def precipitation():
 
-    #Next to set the string of the return from some functions to variables
+    #I created a function to find the last date of the dataset, here i am setting that to a variable in this function
     last_date_str = last_date()
 
     #Now I need a variable that is the date 1 year ago. I used weeks=52.2 since 52*7 /= 365
@@ -87,18 +53,19 @@ def precipitation():
     # Create our session (link) from Python to the DB
     session = Session(engine)
 
-    # Query all stations
-    #results = session.query(Station.station).all()
+    # Query to return the dates and precipitation for the last year of available data
     qry = session.query(Measurement.date, Measurement.prcp).\
                         filter(Measurement.date >= year_ago).all()
 
+    #Important to close the session
     session.close()
 
-    #prcp_list = []
+    #Assignment asks us to set up a dictionary where the date is the key and prcp is the value
     prcpDict = {}
     for result in qry:
         prcpDict.update({result.date:result.prcp})
 
+    #Finally to return the dictionary as a json object to be displayed on our site.
     return jsonify(prcpDict)
 
 #Setup the stations page
@@ -110,11 +77,13 @@ def stations():
     # Query all stations
     results = session.query(Station.station).all()
 
+    #Important to close the session
     session.close()
 
     # Convert list of tuples into normal list
     qry_result = list(np.ravel(results))
 
+    #Return the results
     return jsonify(qry_result)
 
 #Setup the tobs page
